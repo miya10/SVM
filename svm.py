@@ -1,8 +1,8 @@
 from cvxopt import matrix, solvers
-from scipy.linalg import norm
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
+from kernel import polynomial_kernel, gaussian_kernel, sigmoid_kernel
 
 # 入力データを正規化（使わないかも）
 def min_max(x, axis=None):
@@ -17,21 +17,6 @@ def load_data(filename):
     x, y = data[:,0:2], data[:,2]
     #x = min_max(x)
     return x, y
-
-# 多項式カーネル
-def polynomial_kernel(x, y):
-    return (1 + np.dot(x, y)) ** 2   # 2次元だから2
-
-# ガウスカーネル
-def gaussian_kernel(x, y):
-    sigma = 10
-    return np.exp(- norm(x-y) ** 2 / (2 * (sigma ** 2)))
-
-# シグモイドカーネル
-def sigmoid_kernel(x, y):
-    a = 3
-    b = 3
-    return np.tanh(a * np.dot(x, y) + b)
 
 def fit(x, y, kernel):
     # 初期設定
@@ -85,8 +70,7 @@ def fit(x, y, kernel):
         b = - b / len(x[S])
     return alphas, w ,b
 
-def func_no_kernel(w, b):
-    x1 = np.linspace(-1, 50, 100)
+def func_no_kernel(x1, w, b):
     return - (w[0] / w[1]) * x1 - (b / w[1])
 
 def func_kernel(x, mesh_lst, alphas, y, b, kernel):
@@ -121,26 +105,29 @@ def draw_graph_kernel(x, y, mesh_x, mesh_y, f):
     plt.contour(mesh_x, mesh_y, f, [0.0], colors='k', linewidths=1, origin='lower')
     plt.xlim(-1, 50)
     plt.ylim(-1, 50)
-    plt.savefig('results/sigmoid_circle.png')
+    #plt.savefig('results/sigmoid_circle.png')
     plt.show()
 
 # コマンドライン引数の設定
 def set_parser():
     parser = argparse.ArgumentParser(usage='SVM実装プログラム', add_help=True)
     parser.add_argument('--filename', '-f', type=str, help='訓練データのファイルパス', required=True)
-    parser.add_argument('--kernel_type', '-k', type=str, help='カーネルの指定', default = None)
+    parser.add_argument('--kernel_type', '-k', type=str, help='カーネルの指定, [None] or [gaussian_kernel] or [polynomial_kernel]', choices=['gaussian_kernel', 'polynomial_kernel', 'sigmoid_kernel', None], default=None)
+    parser.add_argument('--division', '-n', type=int, help='交差検定の分割数n', default=None)
     
     args = parser.parse_args()
     filename = args.filename
     kernel = args.kernel_type
-    return filename, kernel
+    n = args.division
+    return filename, kernel, n
 
 if __name__ == '__main__':
-    filename, kernel = set_parser()
+    filename, kernel, n = set_parser()
     x, y = load_data(filename)
     alphas, w, b = fit(x, y, kernel)
     if kernel == None:
-        f = func_no_kernel(w, b)
+        x1 = np.linspace(-1, 50, 1000)
+        f = func_no_kernel(x1, w, b)
         draw_graph(x, y, f)
     else:
         split = 50
@@ -152,4 +139,5 @@ if __name__ == '__main__':
             f_i = func_kernel(x, mesh_lst[i], alphas, y, b, kernel)
             f = np.append(f, f_i)
         f = f.reshape(split, split)
+        print(f)
         draw_graph_kernel(x, y, mesh_x, mesh_y, f)
