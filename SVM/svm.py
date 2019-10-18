@@ -1,30 +1,25 @@
+# coding
 from cvxopt import matrix, solvers
 import numpy as np
 import matplotlib.pyplot as plt
-import argparse
-from kernel import polynomial_kernel, gaussian_kernel, sigmoid_kernel
+from kernel import *
+from init import *
 
-# 入力データを正規化（使わないかも）
-def min_max(x, axis=None):
-    min = x.min(axis=axis, keepdims=True)
-    max = x.max(axis=axis, keepdims=True)
-    result = (x-min)/(max-min)
-    return result
+"""
+--主要変数の説明--
+x:読み込みデータのn次元特徴を表す配列
+y:正解ラベルの配列
+alphas:2次計画問題の解の配列
+f:識別器の計算結果
+他の変数はグラフのプロット用もしくは計算途中の変数
+"""
 
-# txtファイルからxy座標と教師信号をnumpy配列で取得
-def load_data(filename):
-    data = np.loadtxt(filename, delimiter=",")
-    x, y = data[:,0:2], data[:,2]
-    #x = min_max(x)
-    return x, y
-
+# SVM実装モデル
 def fit(x, y, kernel):
-    # 初期設定
+    # cvxotの形式にデータを変換
     m, n = x.shape
     y = y.reshape(-1, 1)
     data_size = len(x)
-    
-    # cvxotの形式にデータを変換
     if kernel == None:
         x_tmp = y * x
         K_no_kernel = np.dot(x_tmp, x_tmp.T)
@@ -52,34 +47,34 @@ def fit(x, y, kernel):
     alphas = np.array(sol['x'])
     w = ((y * alphas).T @ x).reshape(-1,1)
     S = (alphas > 1e-6).flatten()
-    if kernel == None:
+    if kernel == None:      # カーネルなしの時の閾値計算
         b = y[S] - np.dot(x[S], w)
         b = np.average(b)
-    else:
+    else:                   # カーネルありの時の閾値計算
         b = 0
         S_index = np.where(S==True)
         for i in range(len(x[S])):
             sum_tmp_b = 0
             for j in range(len(x[S])):
-
                 tmp_b = alphas[S_index[0][j]] * y[S][j] * eval(kernel)(x[S][j], x[S][i])
                 sum_tmp_b += tmp_b
             b_i = -sum_tmp_b + y[S][i]
-
             b += b_i
         b = - b / len(x[S])
     return alphas, w ,b
 
+# カーネルなしの識別器計算
 def func_no_kernel(x1, w, b):
     return - (w[0] / w[1]) * x1 - (b / w[1])
 
+# カーネルありの識別器計算
 def func_kernel(x, mesh_lst, alphas, y, b, kernel):
     sum_tmp = 0
     for i in range(len(x)):
         sum_tmp += alphas[i] * y[i] * eval(kernel)(x[i], mesh_lst)
     return sum_tmp - b
 
-# グラフを描写
+# カーネルなしの時のグラフを描写
 def draw_graph(x, y, f):
     for n in range(len(x)):
         if y[n] == 1:
@@ -88,13 +83,13 @@ def draw_graph(x, y, f):
             plt.scatter(x[n,0], x[n,1], s = 10, color = 'b')
     x1 = np.linspace(-1, 50, 1000)
     x2 = f
-
     plt.plot(x1, x2, 'g-')
     plt.xlim(-1, 50)
     plt.ylim(-1, 50)
     #plt.savefig('results/カーネる.png')
     plt.show()
 
+# カーネルありのグラフ描写
 def draw_graph_kernel(x, y, mesh_x, mesh_y, f):
     for n in range(len(x)):
         if y[n] == 1:
@@ -105,23 +100,12 @@ def draw_graph_kernel(x, y, mesh_x, mesh_y, f):
     plt.contour(mesh_x, mesh_y, f, [0.0], colors='k', linewidths=1, origin='lower')
     plt.xlim(-1, 50)
     plt.ylim(-1, 50)
-    #plt.savefig('results/sigmoid_circle.png')
+    filename = 'results/gaussian_sigma=5.png'
+    plt.savefig(filename)
     plt.show()
 
-# コマンドライン引数の設定
-def set_parser():
-    parser = argparse.ArgumentParser(usage='SVM実装プログラム', add_help=True)
-    parser.add_argument('--filename', '-f', type=str, help='訓練データのファイルパス', required=True)
-    parser.add_argument('--kernel_type', '-k', type=str, help='カーネルの指定, [None] or [gaussian_kernel] or [polynomial_kernel]', choices=['gaussian_kernel', 'polynomial_kernel', 'sigmoid_kernel', None], default=None)
-    parser.add_argument('--division', '-n', type=int, help='交差検定の分割数n', default=None)
-    
-    args = parser.parse_args()
-    filename = args.filename
-    kernel = args.kernel_type
-    n = args.division
-    return filename, kernel, n
-
-if __name__ == '__main__':
+# メイン関数
+def main():
     filename, kernel, n = set_parser()
     x, y = load_data(filename)
     alphas, w, b = fit(x, y, kernel)
@@ -139,5 +123,9 @@ if __name__ == '__main__':
             f_i = func_kernel(x, mesh_lst[i], alphas, y, b, kernel)
             f = np.append(f, f_i)
         f = f.reshape(split, split)
-        print(f)
         draw_graph_kernel(x, y, mesh_x, mesh_y, f)
+
+    print("----結果出力----\n解：α=%r\n重み：w=%r\n閾値：θ=%e" % (alphas, alphas.flatten()*y, b))
+
+if __name__ == '__main__':
+    main()
