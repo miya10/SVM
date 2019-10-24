@@ -32,7 +32,10 @@ def min_max(x, axis=None):
 
 # txtファイルからxy座標と教師信号をnumpy配列で取得
 def load_data(filename):
-    data = np.loadtxt(filename, delimiter=",")
-    x, y = data[:,0:2], data[:,2]
+    if 'txt' in filename:
+        data = np.loadtxt(filename, delimiter=",")
+    else:
+        data = np.loadtxt(filename, dtype=float)
+    x, y = data[:,0:-1], data[:,-1]
     #x = min_max(x)
     return x, y

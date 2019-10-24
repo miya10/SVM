@@ -1,6 +1,7 @@
 # カーネルの定義
 import numpy as np
 from scipy.linalg import norm
+import math
 
 """
 --主要変数の説明--
@@ -14,7 +15,7 @@ def polynomial_kernel(x, y):
 
 # ガウスカーネル
 def gaussian_kernel(x, y):
-    sigma = 10
+    sigma = math.sqrt(5)
     return np.exp(- norm(x-y) ** 2 / (2 * (sigma ** 2)))
 
 # シグモイドカーネル
