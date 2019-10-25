@@ -17,6 +17,7 @@ def main():
     filename, kernel, n = set_parser()
     x, y = load_data(filename)
     c_list = [1.0, 10.0, 100.0, 1000.0]
+    result = []
     for j in range(len(c_list)):
         print('---- C = '+str(c_list[j])+' ----')
         total_mse = 0
@@ -26,7 +27,10 @@ def main():
             print('MSE = ', mse)
             total_mse += mse
         total_mse = total_mse / n
+        result.append(total_mse)
         print('評価結果：', total_mse)
+    best_index = result.index(min(result))
+    print('C = %e で最も良い精度が観測されました．' % (c_list[best_index]))
 
 if __name__ == '__main__':
     main()
