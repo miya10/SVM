@@ -16,7 +16,7 @@ def polynomial_kernel(x, y):
 # ガウスカーネル
 def gaussian_kernel(x, y):
     sigma = math.sqrt(5)
-    return np.exp(- norm(x-y) ** 2 / (2 * (sigma ** 2)))
+    return np.exp(- np.linalg.norm(x-y) ** 2 / (2 * (sigma ** 2)))
 
 # シグモイドカーネル
 def sigmoid_kernel(x, y):

@@ -22,10 +22,13 @@ f:識別器の計算結果
 
 # 入力データを訓練用と検証用に分割
 def split_data(x, y, n, i):
+    feature_num = x.shape[1]
     x = np.array_split(x, n)
     test_x = x[i]
     train_x = np.delete(x, i, 0)
-    train_x = np.reshape(train_x, (-1, 2))
+    train_x = train_x.reshape(-1,)
+    train_x = np.ravel(train_x)
+    train_x = np.reshape(train_x, (-1, feature_num))
     y = np.array_split(y, n)
     test_y = y[i]
     train_y = np.delete(y, i, 0)

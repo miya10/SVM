@@ -3,6 +3,17 @@ import sys
 sys.path.append('../SVM')
 import init, svm
 from kernel import *
+import data_organize
+import matplotlib.pyplot as plt
+
+def split_data(x, y, n, i):
+    test_len = len(x) // n
+    feature_num = x.shape[1]
+    test_x = x[len(x) - (i+1) * test_len:len(x) - i * test_len,]
+    train_x = np.delete(x, slice(len(x) - (i+1) * test_len, len(x) - i * test_len), 0)
+    test_y = y[len(x) - (i+1) * test_len:len(x) - i * test_len,]
+    train_y = np.delete(y, slice(len(x) - (i+1) * test_len, len(x) - i * test_len), 0)
+    return train_x, test_x, train_y, test_y
 
 # SVR実装モデル
 def fit(x, y, kernel, C=1000.0):
@@ -70,28 +81,78 @@ def fit(x, y, kernel, C=1000.0):
         else:
             b[i] = - y[i] + tmp_b_sum - eps
     b = np.average(b[support_vector])
-    return alphas, w, b
+    return alphas, w, b, diff
 
-def predict(x, w, b, kernel):
-    result = np.zeros(len(x))
+def predict(train_x, test_x, w, b, diff, kernel):
+    result = np.zeros(len(train_x))
     if kernel == None:
         for i in range(len(x)):
-            result[i] = np.dot(w, x[i]) - b
+            result[i] = np.dot(w, test_x[i]) - b
     else:
-        for i in range(len(x)):
-            result[i] = eval(kernel)(w, x[i]) - b
+        for i in range(len(train_x)):
+            result[i] =  diff[i] * eval(kernel)(train_x[i], test_x)
+        result = np.sum(result) - b
     return result
 
+def draw_graph(test_y, predict_y):
+    fig, ax = plt.subplots(facecolor="w")
+    ax.plot(test_y, color='b', label="real")
+    ax.plot(predict_y, color='r', label='predict')
+    ax.legend()
+    filename = 'results/gaussian_root5_seikikanew.png'
+    #plt.savefig(filename)
+    plt.show()
+
+def standardization_2d_all(l_2d):
+    l_flatten = sum(l_2d, [])
+    l_2d_mean = statistics.mean(l_flatten)
+    l_2d_stdev = statistics.stdev(l_flatten)
+    return [[(i - l_2d_mean) / l_2d_stdev for i in l_1d]
+            for l_1d in l_2d]
+
 # メイン関数
-def main():
+def main_for_sample():
     filename, kernel, n = init.set_parser()
     x, y = init.load_data(filename)
-    alphas, w, b = fit(x, y, kernel)
-    result = predict(x, w, b, kernel)
+    alphas, w, b, diff = fit(x, y, kernel)
+    if kernel == None:
+        predict_y = predict(x, x, w, b, diff, kernel)
+    else:
+        predict_y = np.zeros(0)
+        for i in range(len(x)):
+            result = predict(x, x[i], w, b, diff, kernel)
+            predict_y = np.append(predict_y, result)
+    draw_graph(y, predict_y)
     print('alpha：',alphas.flatten())
     print('重み：', w)
     print('閾値：', b)
-    print('result = ', result)
+    print('result = ', predict_y)
+
+def main():
+    filename, kernel, n = init.set_parser()
+    x, y = data_organize.data_organize(filename)
+    x = x[0:500,]
+    y = y[0:500,]
+    for i in range(len(x)):
+        max, x[i] = init.min_max(x[i])
+    max, y = init.min_max(y)
+    train_x, test_x, train_y, test_y = split_data(x, y, n, n-1)
+    alphas, w, b, diff = fit(train_x, train_y, kernel)
+    if kernel == None:
+        predict_y = predict(train_x, test_x, w, b, diff, kernel)
+    else:
+        predict_y = np.zeros(0)
+        for i in range(len(test_x)):
+            result = predict(train_x, test_x[i], w, b, diff, kernel)
+            predict_y = np.append(predict_y, result)
+    predict_y = predict_y * max
+    test_y = test_y * max
+    draw_graph(test_y, predict_y)
+    print('alpha：',alphas.flatten())
+    print('重み：', w)
+    print('閾値：', b)
+    print('result = ', predict_y)
 
 if __name__ == '__main__':
     main()
+    #main_for_sample()
