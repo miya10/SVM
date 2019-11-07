@@ -28,7 +28,15 @@ def min_max(x, axis=None):
     min = x.min(axis=axis, keepdims=True)
     max = x.max(axis=axis, keepdims=True)
     result = (x-min)/(max-min)
-    return max, result
+    return result
+
+# 配列を標準化
+def standardization(arr):
+    average = np.mean(arr)
+    std = np.std(arr)
+    for i in range(len(arr)):
+        arr[i] = arr[i] - average / std
+    return arr
 
 # txtファイルからxy座標と教師信号をnumpy配列で取得
 def load_data(filename):

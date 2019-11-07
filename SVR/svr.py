@@ -6,6 +6,24 @@ from kernel import *
 import data_organize
 import matplotlib.pyplot as plt
 
+"""
+--主要変数の説明--
+x:読み込みデータのn次元特徴を表す配列
+y:価格の配列
+kernel:指定されたカーネル
+train_x:学習用の特徴量
+test_x:テスト用の特徴量
+train_y:学習用の価格データ
+test_y:テスト用の価格データ
+alphas:2次計画問題の解の配列
+w:重み
+b:閾値
+diff:α_k - α_k^* の配列
+predict_y:価格の予測結果
+他の変数はグラフのプロット用もしくは計算途中の変数
+"""
+
+# 訓練データとテストデータに分割
 def split_data(x, y, n, i):
     test_len = len(x) // n
     feature_num = x.shape[1]
@@ -83,6 +101,7 @@ def fit(x, y, kernel, C=1000.0):
     b = np.average(b[support_vector])
     return alphas, w, b, diff
 
+# 回帰式を計算
 def predict(train_x, test_x, w, b, diff, kernel):
     result = np.zeros(len(train_x))
     if kernel == None:
@@ -94,21 +113,15 @@ def predict(train_x, test_x, w, b, diff, kernel):
         result = np.sum(result) - b
     return result
 
+# グラフを描写
 def draw_graph(test_y, predict_y):
     fig, ax = plt.subplots(facecolor="w")
     ax.plot(test_y, color='b', label="real")
     ax.plot(predict_y, color='r', label='predict')
     ax.legend()
-    filename = 'results/gaussian_root5_seikikanew.png'
+    filename = 'results/gaussian_root5_seikika.png'
     #plt.savefig(filename)
     plt.show()
-
-def standardization_2d_all(l_2d):
-    l_flatten = sum(l_2d, [])
-    l_2d_mean = statistics.mean(l_flatten)
-    l_2d_stdev = statistics.stdev(l_flatten)
-    return [[(i - l_2d_mean) / l_2d_stdev for i in l_1d]
-            for l_1d in l_2d]
 
 # メイン関数
 def main_for_sample():
@@ -131,11 +144,12 @@ def main_for_sample():
 def main():
     filename, kernel, n = init.set_parser()
     x, y = data_organize.data_organize(filename)
-    x = x[0:500,]
-    y = y[0:500,]
-    for i in range(len(x)):
-        max, x[i] = init.min_max(x[i])
-    max, y = init.min_max(y)
+    size = 500
+    #x = x[0:size,]
+    #y = y[0:size,]
+    for i in range(x.shape[1]):
+        #x[:, i] = init.standardization(x[:, i])
+        x[:, i] = init.min_max(x[:, i])
     train_x, test_x, train_y, test_y = split_data(x, y, n, n-1)
     alphas, w, b, diff = fit(train_x, train_y, kernel)
     if kernel == None:
@@ -145,13 +159,12 @@ def main():
         for i in range(len(test_x)):
             result = predict(train_x, test_x[i], w, b, diff, kernel)
             predict_y = np.append(predict_y, result)
-    predict_y = predict_y * max
-    test_y = test_y * max
-    draw_graph(test_y, predict_y)
-    print('alpha：',alphas.flatten())
+    #draw_graph(test_y, predict_y)
+    """print('alpha：',alphas.flatten())
     print('重み：', w)
     print('閾値：', b)
-    print('result = ', predict_y)
+    print('result = ', predict_y)"""
+    return test_y, predict_y
 
 if __name__ == '__main__':
     main()

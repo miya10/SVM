@@ -4,8 +4,23 @@ from init import *
 import svr
 from data_organize import data_organize
 
+"""
+--主要変数の説明--
+x:読み込みデータのn次元特徴を表す配列
+y:価格の配列
+kernel:指定されたカーネル
+train_x:学習用の特徴量
+test_x:テスト用の特徴量
+train_y:学習用の価格データ
+test_y:テスト用の価格データ
+alphas:2次計画問題の解の配列
+w:重み
+b:閾値
+mse:2乗誤差
+他の変数は計算途中の変数
+"""
 
-
+# 交差検定
 def cross_validate(train_x, test_x, train_y, test_y, kernel, C):
     alphas, w, b, diff = svr.fit(train_x, train_y, kernel, C)
     if kernel == None:
@@ -21,6 +36,7 @@ def cross_validate(train_x, test_x, train_y, test_y, kernel, C):
         mse += tmp
     return mse / len(test_y)
 
+# メイン関数
 def main():
     filename, kernel, n = set_parser()
     #x, y = load_data(filename)
