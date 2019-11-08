@@ -5,10 +5,9 @@ sys.path.append('../SVR')
 import svr
 
 # スコアを計算
-def calculate_score(test_y, predict_y):
-    #predict_y = predict_y * 0.80
-    score_arr = np.zeros(0)
-    arr = np.arange(0, 1.0, 0.01)
+def nomal_agent(test_y, predict_y):
+    arr = np.arange(0.5, 1.0, 0.01)
+    best_benefits = 0
     for j in range(len(arr)):
         #new_predict_y = predict_y - j
         new_predict_y = predict_y * arr[j]
@@ -23,19 +22,18 @@ def calculate_score(test_y, predict_y):
             else:
                 continue
         final_score = score / np.sum(test_y)
-        print(str(arr[j]) + '-効率:' + str(final_score) + ' 正解数:' + str(correct_score) + ' 収益:' + str(score))
-        score_arr = np.append(score_arr, final_score)
-    best_score = np.max(score_arr)
-    best_index = np.argmax(score_arr)
-    print(str(best_index)+'でscore:'+str(best_score))
-    return best_score
+        if final_score > best_benefits:
+            best_param = arr[j]
+            best_score = score
+            best_benefits = final_score
+            best_correct_score = correct_score
+    print('param=%0.2f, 効率=%0.3f, 正解数=%d/%d, 収益=%d/%d' % (best_param, best_benefits, best_correct_score, len(test_y), best_score, np.sum(test_y)))
 
 def average_agent(test_y):
     new_predict_y = np.full(len(test_y), np.average(test_y))
     score = 0.0
     correct_score = 0
     for i in range(len(test_y)):
-        
         if new_predict_y[i] < test_y[i]:
             correct_score += 1
             score += new_predict_y[i]
@@ -44,13 +42,110 @@ def average_agent(test_y):
         else:
             continue
     final_score = score / np.sum(test_y)
-    print('平均値agent\n効率:' + str(final_score) + ' 正解数:' + str(correct_score) + ' 収益:' + str(score))
+    print('効率=%0.3f, 正解数=%d/%d, 収益=%d/%d' % (final_score, correct_score, len(test_y), score, np.sum(test_y)))
+
+def random_agent(test_y, predict_y):
+    score_arr = np.zeros(0)
+    arr = np.arange(0.5, 1.0, 0.01)
+    random_arr = np.random.rand(len(test_y))
+    best_benefits = 0
+    for j in range(len(arr)):
+        #new_predict_y = predict_y - j
+        new_predict_y = predict_y * arr[j]
+        price_sum = 0.0
+        score = 0.0
+        correct_score = 0
+        sample_num = 0
+        for i in range(len(test_y)):
+            if random_arr[i] < 0.5:
+                sample_num += 1
+                price_sum += test_y[i]
+                if new_predict_y[i] < test_y[i]:
+                    correct_score += 1
+                    score += new_predict_y[i]
+                elif new_predict_y[i] == test_y[i]:
+                    score += new_predict_y[i] * 0.5
+                else:
+                    continue
+        final_score = score / price_sum
+        if final_score > best_benefits:
+            best_param = arr[j]
+            best_score = score
+            best_benefits = final_score
+            best_correct_score = correct_score
+    print('param=%0.2f, 効率=%0.3f, 正解数=%d/%d, 収益=%d/%d' % (best_param, best_benefits, best_correct_score, sample_num, best_score, price_sum))
+
+def outlier_agent(test_y, predict_y):
+    score_arr = np.zeros(0)
+    arr = np.arange(0.5, 1.0, 0.01)
+    best_benefits = 0
+    for j in range(len(arr)):
+        new_predict_y = predict_y * arr[j]
+        sorted_predict_y = np.sort(predict_y)
+        price_sum = 0.0
+        score = 0.0
+        correct_score = 0
+        sample_num = 0
+        for i in range(len(test_y)):
+            if predict_y[i] < sorted_predict_y[int(len(predict_y)*0.75)]:
+                sample_num += 1
+                price_sum += test_y[i]
+                if new_predict_y[i] < test_y[i]:
+                    correct_score += 1
+                    score += new_predict_y[i]
+                elif new_predict_y[i] == test_y[i]:
+                    score += new_predict_y[i] * 0.5
+                else:
+                    continue
+        final_score = score / price_sum
+        if final_score > best_benefits:
+            best_param = arr[j]
+            best_score = score
+            best_benefits = final_score
+            best_correct_score = correct_score
+    print('param=%0.2f, 効率=%0.3f, 正解数=%d/%d, 収益=%d/%d' % (best_param, best_benefits, best_correct_score, sample_num, best_score, price_sum))
+
+    def outlier_agent2(test_y, predict_y):
+    score_arr = np.zeros(0)
+    arr = np.arange(0.5, 1.0, 0.01)
+    best_benefits = 0
+    for j in range(len(arr)):
+        new_predict_y = predict_y * arr[j]
+        sorted_predict_y = np.sort(predict_y)
+        price_sum = 0.0
+        score = 0.0
+        correct_score = 0
+        sample_num = 0
+        for i in range(len(test_y)):
+            if predict_y[i] < sorted_predict_y[int(len(predict_y)*0.75)]:
+                sample_num += 1
+                price_sum += test_y[i]
+                if new_predict_y[i] < test_y[i]:
+                    correct_score += 1
+                    score += new_predict_y[i]
+                elif new_predict_y[i] == test_y[i]:
+                    score += new_predict_y[i] * 0.5
+                else:
+                    continue
+        final_score = score / price_sum
+        if final_score > best_benefits:
+            best_param = arr[j]
+            best_score = score
+            best_benefits = final_score
+            best_correct_score = correct_score
+    print('param=%0.2f, 効率=%0.3f, 正解数=%d/%d, 収益=%d/%d' % (best_param, best_benefits, best_correct_score, sample_num, best_score, price_sum))
 
 # メイン関数
 def main():
     test_y, predict_y = svr.main()
+    print('-average agent-')
     average_agent(test_y)
-    calculate_score(test_y, predict_y)
+    print('-nomal agent-')
+    nomal_agent(test_y, predict_y)
+    print('-random agent-')
+    random_agent(test_y, predict_y)
+    print('-outlier agent-')
+    outlier_agent(test_y, predict_y)
 
 if __name__ == '__main__':
     main()
