@@ -4,7 +4,16 @@ from decimal import Decimal
 sys.path.append('../SVR')
 import svr
 
-# スコアを計算
+"""
+--主要変数の説明--
+best_benefits:効率
+best_correct_score:提供成功回数
+best_score:収益
+test_y:テストデータの価格を表す配列
+predict_y:価格の予測結果
+"""
+
+# 予測値を用いた単純なエージェント
 def simple_agent(test_y, predict_y):
     best_benefits = 0
     new_predict_y = predict_y - 50
@@ -24,8 +33,7 @@ def simple_agent(test_y, predict_y):
     best_correct_score = correct_score
     print('効率=%0.3f, 提供成功回数=%d/%d, 収益=%d/%d' % (best_benefits, best_correct_score, len(test_y), best_score, np.sum(test_y)))
 
-
-# スコアを計算
+# 予測値を用いた単純なエージェント
 def nomal_agent(test_y, predict_y):
     arr = np.arange(0.5, 1.0, 0.01)
     best_benefits = 0
@@ -50,6 +58,7 @@ def nomal_agent(test_y, predict_y):
             best_correct_score = correct_score
     print('param=%0.2f, 効率=%0.3f, 提供成功回数=%d/%d, 収益=%d/%d' % (best_param, best_benefits, best_correct_score, len(test_y), best_score, np.sum(test_y)))
 
+# 平均値エージェント
 def average_agent(test_y):
     new_predict_y = np.full(len(test_y), np.average(test_y))
     score = 0.0
@@ -65,6 +74,7 @@ def average_agent(test_y):
     final_score = score / np.sum(test_y)
     print('効率=%0.3f, 提供成功回数=%d/%d, 収益=%d/%d' % (final_score, correct_score, len(test_y), score, np.sum(test_y)))
 
+# ランダム市場参入エージェント
 def random_agent(test_y, predict_y):
     score_arr = np.zeros(0)
     arr = np.arange(0.5, 1.0, 0.01)
@@ -95,6 +105,7 @@ def random_agent(test_y, predict_y):
             best_correct_score = correct_score
     print('param=%0.2f, 効率=%0.3f, 提供成功回数=%d/%d, 収益=%d/%d' % (best_param, best_benefits, best_correct_score, sample_num, best_score, price_sum))
 
+# 外れ値回避エージェント 
 def outlier_agent(test_y, predict_y):
     score_arr = np.zeros(0)
     arr = np.arange(0.5, 1.0, 0.01)
@@ -125,6 +136,7 @@ def outlier_agent(test_y, predict_y):
             best_correct_score = correct_score
     print('param=%0.2f, 効率=%0.3f, 提供成功回数=%d/%d, 収益=%d/%d' % (best_param, best_benefits, best_correct_score, sample_num, best_score, price_sum))
 
+# 使用しない
 def compare_agent(test_y, predict_y):
     score_arr = np.zeros(0)
     arr = np.arange(0.5, 1.0, 0.01)
