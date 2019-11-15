@@ -144,9 +144,9 @@ def main_for_sample():
 def main():
     filename, kernel, n = init.set_parser()
     x, y = data_organize.data_organize(filename)
-    size = 500
-    #x = x[0:size,]
-    #y = y[0:size,]
+    size = 2000
+    x = x[0:size,]
+    y = y[0:size,]
     for i in range(x.shape[1]):
         #x[:, i] = init.standardization(x[:, i])
         x[:, i] = init.min_max(x[:, i])
